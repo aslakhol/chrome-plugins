@@ -1,0 +1,33 @@
+[data-grf-hidden] {
+  display: none !important;
+}
+
+#grf-bar {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 1000;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--borderColor-default, #d0d7de);
+  border-radius: 8px;
+  background: var(--bgColor-default, #fff);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+#grf-bar button {
+  padding: 4px 10px;
+  border: 1px solid var(--borderColor-default, #d0d7de);
+  border-radius: 6px;
+  background: var(--bgColor-muted, #f6f8fa);
+  color: var(--fgColor-default, #1f2328);
+  cursor: pointer;
+}
+
+#grf-bar button[aria-pressed="true"] {
+  background: var(--bgColor-accent-emphasis, #0969da);
+  border-color: transparent;
+  color: var(--fgColor-onEmphasis, #fff);
+}
