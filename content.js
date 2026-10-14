@@ -66,6 +66,23 @@ const filtersFor = (path) =>
     .filter(([, { match }]) => match(path))
     .map(([key]) => key);
 
+const isHidden = (path) => filtersFor(path).some((key) => active.has(key));
+
+// The item's own text, excluding its nested subtree. Compacted folders read like "graphql/generated".
+const treeLabel = (item) =>
+  [...item.childNodes]
+    .filter((node) => !(node instanceof Element && node.matches("[role='group']")))
+    .map((node) => node.textContent)
+    .join("")
+    .replace(/[‎‏]/g, "")
+    .trim();
+
+const treePath = (item) => {
+  const labels = [];
+  for (let el = item; el; el = el.parentElement?.closest("[role='treeitem']")) labels.unshift(treeLabel(el));
+  return labels.join("/");
+};
+
 const setHidden = (el, hidden) =>
   hidden ? el.setAttribute("data-grf-hidden", "") : el.removeAttribute("data-grf-hidden");
 
@@ -78,9 +95,8 @@ const apply = async () => {
   for (const el of diffs) {
     const path = await resolvePath(el);
     if (!path) continue;
-    const matched = filtersFor(path);
-    for (const key of matched) counts[key]++;
-    const hidden = matched.some((key) => active.has(key));
+    for (const key of filtersFor(path)) counts[key]++;
+    const hidden = isHidden(path);
     setHidden(el, hidden);
     if (hidden) {
       hiddenHashes.add(el.id);
@@ -88,12 +104,22 @@ const apply = async () => {
     }
   }
 
-  // File tree entries: classic links to `#diff-<hash>`, the new UI uses the path as item id.
-  // Skip folders: they contain their children's links and would be hidden wholesale.
+  // File tree leaves: classic links to `#diff-<hash>`, the new UI uses the path as item id.
+  // Skip folders here: they contain their children's links and would be hidden wholesale.
+  const knownPaths = new Set(pathByHash.values());
   for (const item of document.querySelectorAll("[role='treeitem']:not([aria-expanded])")) {
     const href = item.querySelector("a[href*='#diff-']")?.getAttribute("href");
     const hash = href?.slice(href.indexOf("#") + 1);
-    setHidden(item, hiddenHashes.has(hash) || hiddenPaths.has(item.id));
+    const path = treePath(item);
+    knownPaths.add(path);
+    setHidden(item, hiddenHashes.has(hash) || hiddenPaths.has(item.id) || isHidden(path));
+  }
+
+  // Collapsed folders don't render their children, so judge folders by every file path we know of.
+  for (const item of document.querySelectorAll("[role='treeitem'][aria-expanded]")) {
+    const prefix = `${treePath(item)}/`;
+    const inside = [...knownPaths].filter((path) => path.startsWith(prefix));
+    setHidden(item, inside.length > 0 && inside.every(isHidden));
   }
 
   renderBar(counts);
