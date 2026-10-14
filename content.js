@@ -89,7 +89,8 @@ const apply = async () => {
   }
 
   // File tree entries: classic links to `#diff-<hash>`, the new UI uses the path as item id.
-  for (const item of document.querySelectorAll("[role='treeitem']")) {
+  // Skip folders: they contain their children's links and would be hidden wholesale.
+  for (const item of document.querySelectorAll("[role='treeitem']:not([aria-expanded])")) {
     const href = item.querySelector("a[href*='#diff-']")?.getAttribute("href");
     const hash = href?.slice(href.indexOf("#") + 1);
     setHidden(item, hiddenHashes.has(hash) || hiddenPaths.has(item.id));
