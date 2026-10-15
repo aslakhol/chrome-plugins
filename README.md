@@ -1,7 +1,5 @@
-# GitHub Review Filter
+# Chrome plugins
 
-Buttons on PR "Files changed" pages to hide tests, generated files, `.scratch` files and docs.
+Small personal Chrome extensions. Each folder is one extension: load it via `chrome://extensions` → Developer mode → Load unpacked.
 
-Install: `chrome://extensions` → enable Developer mode → Load unpacked → pick this folder. After edits, hit reload on the extension card.
-
-Filter rules live at the top of `content.js`.
+- [gh-review-filter](gh-review-filter) — toggle test, generated, `.scratch` and docs files on GitHub PR diffs
