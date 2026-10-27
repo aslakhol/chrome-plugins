@@ -26,8 +26,14 @@
   cursor: pointer;
 }
 
-#grf-bar button[aria-pressed="true"] {
+#grf-bar button[data-mode="hide"] {
   background: var(--bgColor-accent-emphasis, #0969da);
+  border-color: transparent;
+  color: var(--fgColor-onEmphasis, #fff);
+}
+
+#grf-bar button[data-mode="only"] {
+  background: var(--bgColor-success-emphasis, #1f883d);
   border-color: transparent;
   color: var(--fgColor-onEmphasis, #fff);
 }

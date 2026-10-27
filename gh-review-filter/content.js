@@ -24,10 +24,15 @@ const FILTERS = {
   },
 };
 
-const STORAGE_KEY = "grf-active";
+const STORAGE_KEY = "grf-modes";
 const DIFF_ID = /^diff-[0-9a-f]{64}$/;
 
-let active = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]"));
+// Each button cycles: off → hide matching files → show only matching files → off.
+const NEXT_MODE = { off: "hide", hide: "only", only: "off" };
+const TITLES = { off: "Hide", hide: "Show only", only: "Show all" };
+
+let modes = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
+const modeOf = (key) => modes[key] ?? "off";
 const pathByHash = new Map();
 
 const isReviewPage = () => /\/pull\/\d+\/(files|changes)/.test(location.pathname);
@@ -66,7 +71,12 @@ const filtersFor = (path) =>
     .filter(([, { match }]) => match(path))
     .map(([key]) => key);
 
-const isHidden = (path) => filtersFor(path).some((key) => active.has(key));
+const isHidden = (path) => {
+  const matched = filtersFor(path);
+  if (matched.some((key) => modeOf(key) === "hide")) return true;
+  const only = Object.keys(FILTERS).filter((key) => modeOf(key) === "only");
+  return only.length > 0 && !only.some((key) => matched.includes(key));
+};
 
 // The item's own text, excluding its nested subtree. Compacted folders read like "graphql/generated".
 const treeLabel = (item) =>
@@ -135,10 +145,9 @@ const renderBar = (counts) => {
       button.type = "button";
       button.dataset.key = key;
       button.dataset.label = label;
-      button.title = `Hide ${label}`;
       button.addEventListener("click", () => {
-        active.has(key) ? active.delete(key) : active.add(key);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([...active]));
+        modes = { ...modes, [key]: NEXT_MODE[modeOf(key)] };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(modes));
         schedule();
       });
       bar.append(button);
@@ -147,8 +156,10 @@ const renderBar = (counts) => {
   }
   for (const button of bar.querySelectorAll("button")) {
     const key = button.dataset.key;
-    button.textContent = `${button.dataset.label} (${counts[key]})`;
-    button.setAttribute("aria-pressed", String(active.has(key)));
+    const mode = modeOf(key);
+    button.textContent = `${mode === "only" ? "Only " : ""}${button.dataset.label} (${counts[key]})`;
+    button.title = `${TITLES[mode]} ${button.dataset.label}`;
+    button.dataset.mode = mode;
   }
 };
 
